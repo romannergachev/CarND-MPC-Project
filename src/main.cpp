@@ -90,31 +90,45 @@ int main() {
           vector<double> ptsx = j[1]["ptsx"];
           vector<double> ptsy = j[1]["ptsy"];
 
-          Eigen::VectorXd ptsxx = Eigen::VectorXd::Map(ptsx.data(), ptsx.size());
-          Eigen::VectorXd ptsyy = Eigen::VectorXd::Map(ptsy.data(), ptsy.size());
+          vector<double> points_x;
+          vector<double> points_y;
 
           double px = j[1]["x"];
           double py = j[1]["y"];
           double psi = j[1]["psi"];
+          double psi_unity = j[1]["psi_unity"];
           double v = j[1]["speed"];
 
+          for (int i = 0; i < ptsx.size(); i++) {
 
-          auto coeffs = polyfit(ptsxx, ptsyy, 1);
+            double x_shifted = ptsx[i] - px;
+            double y_shifted = ptsy[i] - py;
 
-          double cte = polyeval(coeffs, 0.0) - py;
+            double x = x_shifted * cos(psi) + y_shifted * sin(psi);
+            double y = - x_shifted * sin(psi) + y_shifted * cos(psi);
 
-          double epsi = -atan(coeffs[1]);
+            points_x.push_back(x);
+            points_y.push_back(y);
+          }
+
+          Eigen::VectorXd points_ex = Eigen::VectorXd::Map(points_x.data(), points_x.size());
+          Eigen::VectorXd points_ey = Eigen::VectorXd::Map(points_y.data(), points_y.size());
+
+
+          auto coeffs = polyfit(points_ex, points_ey, 3);
+
+          double cte = polyeval(coeffs, 0.0);
+
+          double epsi = atan(coeffs[1]);
 
           Eigen::VectorXd state(6);
-          state << px, py, psi, v, cte, epsi;
+          state << 0, 0, 0, v, cte, epsi;
+
+          std::vector<std::vector<double>> vars = mpc.Solve(state, coeffs);
 
 
-          auto vars = mpc.Solve(state, coeffs);
-
-          state << vars[0], vars[1], vars[2], vars[3], vars[4], vars[5];
-
-          double steer_value = vars[6];
-          double throttle_value = vars[3];
+          double steer_value    = -vars[2][0];
+          double throttle_value = vars[3][0];
 
           if (steer_value > 1.0) {
             steer_value = 1.0;
@@ -138,6 +152,10 @@ int main() {
           vector<double> mpc_x_vals;
           vector<double> mpc_y_vals;
 
+          mpc_x_vals = vars[0];
+          mpc_y_vals = vars[1];
+
+
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
 
@@ -147,6 +165,9 @@ int main() {
           //Display the waypoints/reference line
           vector<double> next_x_vals;
           vector<double> next_y_vals;
+
+          next_x_vals = points_x;
+          next_y_vals = points_y;
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Yellow line
@@ -166,7 +187,7 @@ int main() {
           //
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
-          //this_thread::sleep_for(chrono::milliseconds(100));
+          this_thread::sleep_for(chrono::milliseconds(100));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {
