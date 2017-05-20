@@ -2,6 +2,49 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+## The model
+### State
+State is defined with the following parameters:
+* x - x coordinate of the vehicle
+* y - y coordinate of the vehicle
+* psi - orientation of the vehicle
+* speed - vehicles' speed
+
+### Actuators
+There are two actuators:
+* delta - steering angle actuator
+* a - throttle actuator
+
+### Update equations
+I'm using Kinematic model described in the Udacity classroom and the update equations has been presented there. Implementation is 
+located in MPC lines from 127 to 132.
+
+### Costs multipliers
+Determining cost multipliers has been one of the most difficult parts of the project. First of all I've thought about the model and
+decided that CTE and Epsi costs should be the most important costs of all, in the same time - speed is not that important to be as close
+to reference value as possible. So I've assigned CTE and Epsi costs the biggest values and then manually fine-tuned the other costs.
+
+## Timestep Length and Frequency
+
+Timestep and Frequency can help us foresee the future behavior of the path for the vehicle. The higher the speed - the higher should be both of this parameters.
+I've started with the values suggested in the classroom, and then tried changing the values. Then I've decided to concentrate on tuning the Frequency and I've 
+chosen dt value dependant on the latency, just a little bit higher and after that I've continued with manually fine-tuning the N value that resulted in N = 10.
+
+
+## Polynomial Fitting and MPC Preprocessing
+
+* Polynomial Fitting - I've decided to approximate the waypoints with the 3rd order polynomial.
+* MPC Preprocessing - I've converted coordinates from the map space to the vehicle space by using simple transformation and rotation.
+
+## Model Predictive Control with Latency
+As I've already mentioned previously, I've bound the Frequency to the Latency, thus I've already selected Frequency in the way, so it will surpass Latency and 
+the model will be able to foresee further then the latency.
+
+## Results
+[![MPC Simulation](https://img.youtube.com/vi/w3yW1ayEPCo/0.jpg)](https://www.youtube.com/watch?v=w3yW1ayEPCo)
+[![MPC Annotated](https://img.youtube.com/vi/ze8CPp08ZNo/0.jpg)](https://www.youtube.com/watch?v=ze8CPp08ZNo)
+
+
 
 ## Dependencies
 
